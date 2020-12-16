@@ -1,0 +1,10 @@
+Enhancement: allow to limit snapshots list
+
+`--last` option limit to the very last snapshot for each hosts. In
+some case you want to show the n last snapshots. For example if you
+want a weekly report of daily snapshots you cannot have this but by
+using shell tools and wont report the correct number of snapshots.
+
+Now the `--limit n` allows to list the last n snapshots.
+
+https://github.com/restic/restic/pull/3167

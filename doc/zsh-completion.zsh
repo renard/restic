@@ -733,6 +733,7 @@ function _restic_snapshots {
     '(-h --help)'{-h,--help}'[help for snapshots]' \
     '(*-H *--host)'{\*-H,\*--host}'[only consider snapshots for this `host` (can be specified multiple times)]:' \
     '--last[only show the last snapshot for each host and path]' \
+    '--limit[only show the n last snapshots for each host and path]' \
     '*--path[only consider snapshots for this `path` (can be specified multiple times)]:' \
     '--tag[only consider snapshots which include this `taglist` (can be specified multiple times)]:' \
     '*--cacert[`file` to load root certificates from (default: use system certificates)]:' \

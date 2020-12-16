@@ -37,6 +37,7 @@ type SnapshotOptions struct {
 	Paths   []string
 	Compact bool
 	Last    bool
+	Limit   int
 	GroupBy string
 }
 
@@ -51,6 +52,7 @@ func init() {
 	f.StringArrayVar(&snapshotOptions.Paths, "path", nil, "only consider snapshots for this `path` (can be specified multiple times)")
 	f.BoolVarP(&snapshotOptions.Compact, "compact", "c", false, "use compact output format")
 	f.BoolVar(&snapshotOptions.Last, "last", false, "only show the last snapshot for each host and path")
+	f.IntVar(&snapshotOptions.Limit, "limit", 0, "only show the last `n` snapshots for each host and path")
 	f.StringVarP(&snapshotOptions.GroupBy, "group-by", "g", "", "string for grouping snapshots by host,paths,tags")
 }
 
@@ -83,6 +85,8 @@ func runSnapshots(opts SnapshotOptions, gopts GlobalOptions, args []string) erro
 	for k, list := range snapshotGroups {
 		if opts.Last {
 			list = FilterLastSnapshots(list)
+		} else if opts.Limit > 0 {
+			list = FilterSnapshotsWithLimit(list, opts.Limit)
 		}
 		sort.Sort(sort.Reverse(list))
 		snapshotGroups[k] = list
@@ -129,17 +133,25 @@ func newFilterLastSnapshotsKey(sn *restic.Snapshot) filterLastSnapshotsKey {
 // entry for each hostname and path. If the snapshot contains multiple paths,
 // they will be joined and treated as one item.
 func FilterLastSnapshots(list restic.Snapshots) restic.Snapshots {
+	return FilterSnapshotsWithLimit(list, 1)
+}
+
+// FilterSnapshotsWithLimit filters a list of snapshots to only return
+// the limit last entries for each hostname and path. If the snapshot
+// contains multiple paths, they will be joined and treated as one
+// item.
+func FilterSnapshotsWithLimit(list restic.Snapshots, limit int) restic.Snapshots {
 	// Sort the snapshots so that the newer ones are listed first
 	sort.SliceStable(list, func(i, j int) bool {
 		return list[i].Time.After(list[j].Time)
 	})
 
 	var results restic.Snapshots
-	seen := make(map[filterLastSnapshotsKey]bool)
+	seen := make(map[filterLastSnapshotsKey]int)
 	for _, sn := range list {
 		key := newFilterLastSnapshotsKey(sn)
-		if !seen[key] {
-			seen[key] = true
+		if seen[key] < limit {
+			seen[key] += 1
 			results = append(results, sn)
 		}
 	}
